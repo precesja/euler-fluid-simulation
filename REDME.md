@@ -1,3 +1,0 @@
-# Title
-
-Some plain text.

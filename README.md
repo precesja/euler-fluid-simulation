@@ -68,27 +68,6 @@ You can modify the following parameters directly in the script:
 
 ---
 
-## Example Results
-
-Here is an example of the density field visualization during the simulation:
-
-![Density Field Visualization](https://via.placeholder.com/800x400.png?text=Visualization+Placeholder)
-
----
-
-## Advanced Features
-
-### GPU Acceleration:
-Future work may involve porting the numerical solver to GPU using libraries such as **CUDA** or **PyTorch** for faster computation on high-resolution grids.
-
-### Boundary Conditions:
-The current implementation uses periodic boundary conditions. Additional conditions, like reflecting or outflow, can be implemented for more realistic scenarios.
-
-### Higher-Order Schemes:
-Implementing higher-order flux reconstruction methods, such as MUSCL or WENO, could improve accuracy.
-
----
-
 ## References
 
 - Toro, E. F. (1999). *Riemann Solvers and Numerical Methods for Fluid Dynamics.* Springer.

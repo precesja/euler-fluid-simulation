@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Calculate conserved variables from primitive variables
 def Conserved(rho, vx, vy, p, gamma, volume):
 
     mass = rho * volume
@@ -10,6 +11,7 @@ def Conserved(rho, vx, vy, p, gamma, volume):
 
     return mass, momx, momy, energy
 
+# Calculate primitive variables from conserved variables
 def Primitive(mass, momx, momy, energy, gamma, volume):
 
     rho = mass / volume
@@ -26,6 +28,7 @@ def Gradient(f, dx):
 
     return f_dx, f_dy
 
+# Slope limiting to gradients to prevent overshooting in solutions
 def SlopeLimiter(f, dx, f_dx, f_dy):
 
     f_dx = np.maximum(0, np.minimum(1, ((f - np.roll(f, 1, axis=0)) / dx) / (f_dx + 1.0e-8 * (f_dx == 0)))) * f_dx
@@ -35,6 +38,7 @@ def SlopeLimiter(f, dx, f_dx, f_dy):
 
     return f_dx, f_dy
 
+# Compute face-centered values from cell-centered values
 def FaceExtrapolation(f, f_dx, f_dy, dx):
 
     f_XL = f - f_dx * dx / 2
@@ -47,29 +51,31 @@ def FaceExtrapolation(f, f_dx, f_dy, dx):
 
     return f_XL, f_XR, f_YL, f_YR
 
+# Compute numerical fluxes between cells
 def GetFlux(rho_L, rho_R, vx_L, vx_R, vy_L, vy_R, p_L, p_R, gamma):
 
     en_L = p_L / (gamma - 1) + 0.5 * rho_L * (vx_L ** 2 + vy_L ** 2)
     en_R = p_R / (gamma - 1) + 0.5 * rho_R * (vx_R ** 2 + vy_R ** 2)
 
-    # Stany uśrednione
+    # Average state variables at cell interfaces
     rho_star = 0.5 * (rho_L + rho_R)
     momx_star = 0.5 * (rho_L * vx_L + rho_R * vx_R)
     momy_star = 0.5 * (rho_L * vy_L + rho_R * vy_R)
     en_star = 0.5 * (en_L + en_R)
     p_star = (gamma - 1) * (en_star - 0.5 * (momx_star ** 2 + momy_star ** 2) / rho_star)
 
-    # compute fluxes (local Lax-Friedrichs/Rusanov)
+    # Compute fluxes using the local Lax-Friedrichs method
     flux_Mass = momx_star
     flux_Momx = momx_star ** 2 / rho_star + p_star
     flux_Momy = momx_star * momy_star / rho_star
     flux_Energy = (en_star + p_star) * momx_star / rho_star
 
-    # Wave speed
+    # Wave speed for stability
     c_L = np.sqrt(gamma * p_L / rho_L) + np.abs(vx_L)
     c_R = np.sqrt(gamma * p_R / rho_R) + np.abs(vx_R)
     c = np.maximum(c_L, c_R)
 
+    # Add numerical dissipation for stability
     flux_Mass -= c * 0.5 * (rho_L - rho_R)
     flux_Momx -= c * 0.5 * (rho_L * vx_L - rho_R * vx_R)
     flux_Momy -= c * 0.5 * (rho_L * vy_L - rho_R * vy_R)
@@ -77,6 +83,7 @@ def GetFlux(rho_L, rho_R, vx_L, vx_R, vy_L, vy_R, p_L, p_R, gamma):
 
     return flux_Mass, flux_Momx, flux_Momy, flux_Energy
 
+# Update conserved variables using computed fluxes
 def ApplyFluxes(f, flux_F_X, flux_F_Y, dx, dt):
 
     f += - dt * dx * flux_F_X
@@ -88,7 +95,6 @@ def ApplyFluxes(f, flux_F_X, flux_F_Y, dx, dt):
 
 def main():
     ################# SIMULATION PARAMETERS ###################
-
     gamma = 5 / 3
     cfl = 0.4
     N = 512
@@ -101,7 +107,6 @@ def main():
     Y, X = np.meshgrid(xlin, xlin)
 
     ############## PERTURBATION #########################
-
     w0 = 0.1
     sigma = 0.05 / np.sqrt(2.)
     rho = 1. + (np.abs(Y - 0.5) < 0.25)
@@ -118,6 +123,7 @@ def main():
 
         rho, vx, vy, p = Primitive(mass, momx, momy, energy, gamma, vol)
 
+        # Compute time step using CFL condition
         dt = cfl * np.min(dx / (np.sqrt(gamma * p / rho) + np.sqrt(vx ** 2 + vy ** 2)))
 
         rho_dx, rho_dy = Gradient(rho, dx)
